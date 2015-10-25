@@ -15,3 +15,9 @@ type model
   dataArray::Array{Int64,2}
 end
 
+function readData(aModel::model, filePath::String)
+  aModel::dataArray = readdlm(filePath, ' ', Int);
+  nodes=size(dataArray)[2]
+  nval=ones(Int, nodes)
+end
+
