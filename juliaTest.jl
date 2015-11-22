@@ -16,6 +16,8 @@ type model
   dataArray::Array{Int64,2}
 end
 
+m=model(nodes,nval,dataArray)
+
 type jointDistWithMarginals
   pdist::Array{Float32,2}
   p_A::Array{Float32,1}
@@ -27,6 +29,16 @@ function readData(aModel::model, filePath::String)
   aModel.nodes=size(dataArray)[2]
   aModel.nval=ones(Int, nodes)
 end
+
+function readData(filePath::String)
+  dataArray = readdlm(filePath, ' ', Int);
+  nodes=size(dataArray)[2];
+  nval=ones(Int, nodes)
+  theModel = model(nodes,nval,dataArray);
+end
+
+aModel = readData("/Users/eliotpbrenner/PycharmProjects/SparsityBoost/data/synthetic_examples/experiments/0/alarm1000.dat")
+aModel.nval
 
 function verify(aJointDistributionWithMarginals::jointDistWithMarginals)
   sumA=sum(aJointDistributionWithMarginals.pdist,1)
@@ -70,15 +82,26 @@ function conditionalDist(m::model,i::Int,j::Int,SToVal::Dict)
   """
   TODO: Test that i,j are distinct and not in conditioning set
   that S is a dict of integers and that both are valid for the model
+  TODO: put the marginals computation into its own function
+  TODO: vectorize the computation of the pDist
   """
-  selectedPoints = reduce(&,[m.dataArray[:,condVar] .==SToVal[condVar] for condVar in keys(SToVal)])
-
+  selectedPoints = m.dataArray[reduce(&,[m.dataArray[:,condVar] .==SToVal[condVar] for condVar in keys(SToVal)])]
+  numSelectedPoints = selectedPoints.shape[1]
+  pDist = zeros(dims=(m.nval[i], m.nval[j]))
+  for k = 1:m.nval[i]
+      for l = 1:m.nval[j]
+          pDist[i,j] = len(selectedPoints[(selectedPoints[:,i] .==k) & (selectedPoints[:,j] .== l)])/numSelectedPoints
+    end
+  end
+  sumA=sum(pdist,1)
+  sumB=sum(pdist,2)
+  jointDistWithMarginals(pDist, sumA, sumB)
 end
 
-dataArray
-d=dataArray
-reduce(&,Array[d[:,3] .==1, d[:,5] .==1])
-reduce(&,[d[:,k] .==ad[k] for k in keys(ad)])
-reduce(&,[dataArray[:,condVar] .==ad[condVar] for condVar in keys(SToVal)])
+SToVal = [3=>0, 4=>1]
+aModel.dataArray
+cd = conditionalDist(aModel, 1, 2, SToVal)
+aModel.dataArray[cd,:]
+
 [x+5y for  x in 1:5, y in 0:1]
 
