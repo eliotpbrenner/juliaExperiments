@@ -1,3 +1,5 @@
+using Base.Test
+
 dataArray = readdlm("/Users/eliotpbrenner/PycharmProjects/SparsityBoost/data/synthetic_examples/experiments/0/alarm1000.dat", ' ', Int);
 size(dataArray)
 # reproducing functionality of model::read_data
@@ -8,7 +10,6 @@ typeof(nodes)
 typeof(nval)
 
 tol=1e-20
-workspace() #use this to clear definitions
 type model
   nodes::Int64
   nval::Array{Int64,1}
@@ -38,7 +39,6 @@ function verify(aJointDistributionWithMarginals::jointDistWithMarginals)
   return true
 end
 
-using Base.Test
 @test 1 == 1
 @test 1==0
 goodDist=jointDistWithMarginals([[0.25 0.25], [ 0.25 0.25]], [0.5, 0.5], [0.5, 0.5])
@@ -66,15 +66,19 @@ goodDist.pdist
 sum(goodDist.pdist, 1)
 goodDist.p_A
 
-function conditionalDist(m::model,i::int,j::int,SToVal::Dict)
+function conditionalDist(m::model,i::Int,j::Int,SToVal::Dict)
   """
   TODO: Test that i,j are distinct and not in conditioning set
   that S is a dict of integers and that both are valid for the model
   """
-  selectedPoints = reduce(&,[dataArray[:,condVar] .==ad[condVar] for condVar in keys(SToVal)])
+  selectedPoints = reduce(&,[m.dataArray[:,condVar] .==SToVal[condVar] for condVar in keys(SToVal)])
 
+end
 
-"""
+dataArray
+d=dataArray
 reduce(&,Array[d[:,3] .==1, d[:,5] .==1])
 reduce(&,[d[:,k] .==ad[k] for k in keys(ad)])
-reduce(&,[dataArray[:,condVar] .==ad[condVar] for condVar in keys(SToVal)])"""
+reduce(&,[dataArray[:,condVar] .==ad[condVar] for condVar in keys(SToVal)])
+[x+5y for  x in 1:5, y in 0:1]
+
