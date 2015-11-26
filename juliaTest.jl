@@ -27,13 +27,14 @@ end
 function readData(aModel::model, filePath::String)
   aModel.dataArray = readdlm(filePath, ' ', Int);
   aModel.nodes=size(dataArray)[2]
-  aModel.nval=ones(Int, nodes)
+  #TODO: correct the way the number of values is set
+  aModel.nval=2*ones(Int, nodes)
 end
 
 function readData(filePath::String)
   dataArray = readdlm(filePath, ' ', Int);
   nodes=size(dataArray)[2];
-  nval=ones(Int, nodes)
+  nval=2*ones(Int, nodes)
   theModel = model(nodes,nval,dataArray);
 end
 
@@ -85,23 +86,68 @@ function conditionalDist(m::model,i::Int,j::Int,SToVal::Dict)
   TODO: put the marginals computation into its own function
   TODO: vectorize the computation of the pDist
   """
-  selectedPoints = m.dataArray[reduce(&,[m.dataArray[:,condVar] .==SToVal[condVar] for condVar in keys(SToVal)])]
-  numSelectedPoints = selectedPoints.shape[1]
-  pDist = zeros(dims=(m.nval[i], m.nval[j]))
+  selectedPoints = m.dataArray[reduce(&,[m.dataArray[:,condVar] .==SToVal[condVar] for condVar in keys(SToVal)]),:]
+  numSelectedPoints = size(selectedPoints)[1]
+  pDist = zeros(m.nval[i], m.nval[j])
   for k = 1:m.nval[i]
       for l = 1:m.nval[j]
-          pDist[i,j] = len(selectedPoints[(selectedPoints[:,i] .==k) & (selectedPoints[:,j] .== l)])/numSelectedPoints
+          pDist[k,l] = size(selectedPoints[(selectedPoints[:,i] .==k-1)&(selectedPoints[:,j] .==l-1), :])[1]/numSelectedPoints
     end
   end
-  sumA=sum(pdist,1)
-  sumB=sum(pdist,2)
-  jointDistWithMarginals(pDist, sumA, sumB)
+  sumA=sum(pDist,1)
+  sumB=sum(pDist,2)
+  #return (pDist, sumA, sumB)
+  jointDistWithMarginals(pDist, vec(sumA), vec(sumB))
 end
+
+function MI(m::model,i::Int,j::Int,SToVal::Dict)
+  """
+  TODO: test
+  """
+  MI(conditionalDist(m::model,i::Int,j::Int,SToVal::Dict))
+end
+
+MI(aModel, 1, 2, SToVal)
+SToVal
+SList=[3,4]
+Iteraotors.product({1:4, 1:3})
+Iterators.product({1:i for i in range(1,5)})
+Iterators.product([1:aModel.nval[i] for i in SList]...)
+Dict(zip([1,2], [3,4]))
+
+function MI(m::model, i::Int, j::Int, S::Array)
+  """
+  TODO: test
+  """
+  min=Inf
+  for p in Iterators.product([1:model.nval[i] for i in S]...)
+    candidate=ConditionalDist(m,i,j, Dict(zip(S,p)))
+    if candidate < min
+      min=candidate
+    end
+  end
+end
+
+
+
+
+# & (selectedPoints[:,j] .== l)]oO
 
 SToVal = [3=>0, 4=>1]
 aModel.dataArray
 cd = conditionalDist(aModel, 1, 2, SToVal)
+vec(cd[3])
+d=[0.5, 0.5]
+size(cd)[1]
+cd[cd[:,1].==2,:]
+cd.shape()
 aModel.dataArray[cd,:]
 
 [x+5y for  x in 1:5, y in 0:1]
-
+Pkg.add("Iterators")
+using Iterators
+x=(Int64,Int64)[]
+for p in Iterators.product(1:4,1:3)
+  push!(x, p)
+end
+x
