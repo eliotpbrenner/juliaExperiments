@@ -24,6 +24,12 @@ type jointDistWithMarginals
   p_B::Array{Float32,1}
 end
 
+function joinDistWithMarginals(pdist::Array{Float32,2})
+  sumA=sum(pDist,1)
+  sumB=sum(pDist,2)
+  jointDistWithMarginals(pdist, sumA, sumB)
+end
+
 function readData(aModel::model, filePath::String)
   aModel.dataArray = readdlm(filePath, ' ', Int);
   aModel.nodes=size(dataArray)[2]
@@ -55,6 +61,7 @@ end
 @test 1 == 1
 @test 1==0
 goodDist=jointDistWithMarginals([[0.25 0.25], [ 0.25 0.25]], [0.5, 0.5], [0.5, 0.5])
+goodDist=jointDistWithMarginals([[0.25 0.25], [ 0.25 0.25]])
 @test verify(goodDist) == true
 badDist = jointDistWithMarginals([[0.25 0.25], [ 0.25 0.25]], [0.6, 0.4], [0.5, 0.5])
 @test_throws ErrorException verify(badDist)
@@ -82,7 +89,6 @@ goodDist.p_A
 function conditionalDist(m::model,i::Int,j::Int,SToVal::Dict)
   """
   TODO: that S is a dict of integers and that both are valid for the model
-  TODO: put the marginals computation into its own function
   TODO: vectorize the computation of the pDist
   """
   @test i!=j
@@ -96,10 +102,10 @@ function conditionalDist(m::model,i::Int,j::Int,SToVal::Dict)
           pDist[k,l] = size(selectedPoints[(selectedPoints[:,i] .==k-1)&(selectedPoints[:,j] .==l-1), :])[1]/numSelectedPoints
     end
   end
-  sumA=sum(pDist,1)
-  sumB=sum(pDist,2)
+  #sumA=sum(pDist,1)
+  #sumB=sum(pDist,2)
   #return (pDist, sumA, sumB)
-  jointDistWithMarginals(pDist, vec(sumA), vec(sumB))
+  jointDistWithMarginals(pDist)
 end
 
 function MI(m::model,i::Int,j::Int,SToVal::Dict)
@@ -187,4 +193,6 @@ testNotInDict(elt::Int, SToVal::Dict) = try
 
 S
 testNotInDict(1,S)
+conditionalDist(m, 4, 5, S)
+@test_throws(DomainError(), )
 
