@@ -81,11 +81,13 @@ goodDist.p_A
 
 function conditionalDist(m::model,i::Int,j::Int,SToVal::Dict)
   """
-  TODO: Test that i,j are distinct and not in conditioning set
-  that S is a dict of integers and that both are valid for the model
+  TODO: that S is a dict of integers and that both are valid for the model
   TODO: put the marginals computation into its own function
   TODO: vectorize the computation of the pDist
   """
+  @test i!=j
+  @test testNotInDict(i, SToVal)
+  @test testNotInDict(j, SToVal)
   selectedPoints = m.dataArray[reduce(&,[m.dataArray[:,condVar] .==SToVal[condVar] for condVar in keys(SToVal)]),:]
   numSelectedPoints = size(selectedPoints)[1]
   pDist = zeros(m.nval[i], m.nval[j])
@@ -120,14 +122,19 @@ function MI(m::model, i::Int, j::Int, S::Array)
   TODO: test
   """
   min=Inf
-  for p in Iterators.product([1:model.nval[i] for i in S]...)
-    candidate=ConditionalDist(m,i,j, Dict(zip(S,p)))
+  for p in Iterators.product([1:m.nval[i] for i in S]...)
+    candidate=MI(m,i,j, Dict(zip(S,p)))
     if candidate < min
       min=candidate
     end
   end
+  return min
 end
 
+MI(aModel, 1,2,[3,4])
+for i in combinations(1:5,3)
+    print(i')
+end
 
 
 
@@ -151,3 +158,33 @@ for p in Iterators.product(1:4,1:3)
   push!(x, p)
 end
 x
+
+
+  S=[1=>2, 3=>4]
+f(x) = try
+      return S[x]
+    catch y
+      if isa(y, KeyError)
+        return 5
+      end
+    end
+f(5)
+
+  #warn("$x is in $SToVal")
+
+testNotInDict(elt::Int, SToVal::Dict) = try
+    """TODO: figure out how to propagate y up the call stack if it's not a KeyError"""
+    x=SToVal[elt]
+    warn("$elt is in $SToVal with value $x")
+    throw(DomainError())
+  catch y
+    if isa(y, KeyError)
+      return true
+    else
+      return y
+    end
+  end
+
+S
+testNotInDict(1,S)
+
